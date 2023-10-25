@@ -1,7 +1,7 @@
-import cv2
+from ultralytics import YOLO
 import os
-for path, dir_list, file_list in os.walk("./data"):
-    print(path)
-    print(dir_list)
-    print(file_list)
-    break
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+model = YOLO("yolov8n.pt")
+model.train(data="./datasets/data.yaml", epochs=2)
+metrics = model.val()
+model.export()
