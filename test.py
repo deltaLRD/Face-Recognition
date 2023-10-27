@@ -10,9 +10,9 @@
 # cap.release()
 
 
-import numpy as np
+# import numpy as np
 
-arr1 = np.zeros((3,5))
-arr2 = np.zeros((5,6))
-arr3 = np.asarray([arr1,arr2])
-print(arr3)
+# arr1 = np.zeros((3,5))
+# arr2 = np.zeros((5,6))
+# arr3 = np.asarray([arr1,arr2])
+# print(arr3)

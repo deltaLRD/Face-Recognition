@@ -7,4 +7,4 @@
 - ultralytics
 - supervision
 - numpy
-- facenet-pytorch
+- pymilvus
