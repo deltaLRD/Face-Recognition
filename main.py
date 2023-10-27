@@ -49,8 +49,11 @@ class CV_Thread(QThread):
     def run(self):
         global image
         cap = cv2.VideoCapture(0)
+        cap.set(3, 1280)
+        cap.set(4, 720)
         while self.run_flag:
             ret, frame = cap.read()
+            # print(frame.shape)
             if ret and pixmap_signal_lock.tryLockForWrite():
                 image = frame
                 self.change_pixmap_signal.emit(True)
@@ -67,8 +70,8 @@ class FaceRecUI(QWidget):
         super().__init__()
         pixmap_signal_lock.unlock()
         detections_lock.unlock()
-        self.display_width = 640
-        self.display_height = 480
+        self.display_width = 1280
+        self.display_height = 720
         self.record_thread = None
         self.signin_thread = None
         self.initUI()
@@ -166,7 +169,7 @@ class FaceRecUI(QWidget):
         if detections_lock.tryLockForWrite():
             detections = sv.Detections.from_ultralytics(result)
             detections = detections[detections.confidence > 0.8]
-            detections = detections[detections.area > 1500.0]
+            detections = detections[detections.area > 100000.0]
             if len(detections) == 0:
                 detections_lock.unlock()
                 return self.image
@@ -278,6 +281,7 @@ class RecordThread(QThread):
 
             # 裁剪图片
             cropped_image = sv.crop_image(cur_image, cur_detections.xyxy[0])
+            cropped_image = cv2.resize(cropped_image, (256,256))
             print(cropped_image.shape)
             vec = img2vec(cropped_image)
             vec = vec.get()
@@ -299,6 +303,7 @@ class RecordThread(QThread):
     
     def stop(self):
         self.wait()
+        self.quit()
     
     
 class SignInThread(QThread):
@@ -324,12 +329,14 @@ class SignInThread(QThread):
                     pixmap_signal_lock.unlock()
                     QThread.msleep(300)
             cropped_image = sv.crop_image(cur_image, cur_detections.xyxy[0])
+            cropped_image = cv2.resize(cropped_image, (256,256))
             print(cropped_image.shape)
             vec = img2vec(cropped_image)
             vec = vec.get()
             vec = vec[0]
             res = faces_collection.search(data=[vec], anns_field="data", param=search_params, limit=1, output_fields=['name'])
-            if len(res[0].ids) == 0:
+            print(res[0].distances)
+            if len(res[0].ids) == 0 or res[0].distances[0]>200:
                 name = ""
             else:
                 name = res[0][0].entity.get("name")
@@ -340,6 +347,7 @@ class SignInThread(QThread):
     
     def stop(self):
         self.wait()
+        self.quit()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
